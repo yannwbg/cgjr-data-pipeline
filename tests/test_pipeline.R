@@ -19,3 +19,11 @@ duplicate_rejected <- tryCatch(
 )
 if (!duplicate_rejected) stop("Edge test failed: duplicate input must raise an error.")
 message("Duplicate-key edge test passed.")
+
+range_fixture <- data.frame(variable = "gdp_growth", value = -52.3)
+range_warned <- tryCatch(
+  { check_ranges(range_fixture, range_rules); FALSE },
+  warning = function(condition) TRUE
+)
+if (!range_warned) stop("Range edge test failed: -52.3 growth must raise a warning.")
+message("Range edge test passed.")
