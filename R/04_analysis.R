@@ -17,7 +17,7 @@ ggsave("outputs/figures/gdp_growth.png", chart, width = 8, height = 5, dpi = 150
 
 summary_table <- analytical |>
   filter(!is.na(gdp_growth)) |>
-  arrange(country_code, year) |>
+  arrange(country_code, desc(year)) |>
   group_by(country_code, country_name) |>
   slice(1) |>
   ungroup() |>

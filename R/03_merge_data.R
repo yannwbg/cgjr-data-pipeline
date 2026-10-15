@@ -13,7 +13,15 @@ for (variable_name in indicators$variable) {
 }
 
 analytical <- analytical |>
-  arrange(country_code, desc(year)) |>
-  mutate(gdp_per_capita_growth = 100 * (gdp_per_capita / lag(gdp_per_capita) - 1))
+  arrange(country_code, year) |>
+  group_by(country_code) |>
+  mutate(
+    gdp_per_capita_growth = if_else(
+      year == lag(year) + 1L,
+      100 * (gdp_per_capita / lag(gdp_per_capita) - 1),
+      NA_real_
+    )
+  ) |>
+  ungroup()
 
 write.csv(analytical, "data/processed/analytical.csv", row.names = FALSE, na = "")
