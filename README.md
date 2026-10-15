@@ -6,13 +6,13 @@ recoverable issues: execution alone does not establish analytical correctness.
 
 ## Setup
 
-Open this repository folder in VS Code, install the four required R packages, set your working directory, create a branch
+Open this repository folder in VS Code, install the three required R packages, set your working directory, create a branch
 
 - Open New Terminal
 - Click on "+" -> "R Terminal"
 - Set your working directory by running 'setwd("your_path")' in the terminal. E.g. `setwd("c:/Users/wb566769/OneDrive - WBG/Documents/cgjr-data-pipeline")`
 - Check the working directory by running `getwd()`
-- Copy the following code then press enter: `install.packages(c("WDI", "dplyr", "ggplot2", "Rilostat"))`
+- Copy the following code then press enter: `install.packages(c("WDI", "dplyr", "ggplot2"))`
 - Create and publish a branch named `first name`. E.g. `yann-branch`; do not work directly on `main`.
 
 ## Baseline
