@@ -1,10 +1,13 @@
 library(dplyr)
 library(ggplot2)
 
+source("R/00_checks.R")
+
 ilostat <- read.csv("data/processed/ilostat_long.csv", stringsAsFactors = FALSE)
 countries <- read.csv("config/countries.csv", stringsAsFactors = FALSE)
 config <- read.csv("config/ilostat_indicators.csv", stringsAsFactors = FALSE)
 dir.create("outputs/figures", recursive = TRUE, showWarnings = FALSE)
+dir.create("outputs/tables", recursive = TRUE, showWarnings = FALSE)
 
 if (anyDuplicated(ilostat[, c("country_code", "year", "indicator")])) {
   stop("Duplicate ILOSTAT keys: the plot would be misleading.")
@@ -17,6 +20,10 @@ plot_data <- expand.grid(country_code = countries$country_code, year = years,
   left_join(countries[, c("country_code", "country_name")], by = "country_code") |>
   left_join(ilostat[, c("country_code", "year", "value")], by = c("country_code", "year"))
 
+fail_if(nrow(plot_data) != nrow(countries) * length(years), "Plot grid size is unexpected")
+fail_if(sum(!is.na(plot_data$value)) != sum(!is.na(ilostat$value)),
+        "Plot does not show every ILOSTAT observation")
+fail_if(length(unique(config$label)) != 1L, "Plot needs exactly one indicator label")
 y_label <- paste0(unique(config$label), " (", unique(ilostat$unit), ")")
 caption_text <- paste0(
   "Source: ILOSTAT, International Labour Organization. Indicator ",
@@ -40,3 +47,17 @@ chart <- ggplot(plot_data, aes(year, value, colour = country_name, group = count
   theme(legend.position = "bottom")
 
 ggsave("outputs/figures/ilostat_employment_to_population.png", chart, width = 8, height = 5, dpi = 150)
+
+coverage_table <- plot_data |>
+  group_by(country_code, country_name) |>
+  summarise(
+    expected_years = n(),
+    observed_years = sum(!is.na(value)),
+    share_observed = round(observed_years / expected_years, 3),
+    first_year = if (any(!is.na(value))) min(year[!is.na(value)]) else NA_integer_,
+    last_year = if (any(!is.na(value))) max(year[!is.na(value)]) else NA_integer_,
+    missing_years = paste(year[is.na(value)], collapse = ";"),
+    .groups = "drop"
+  )
+fail_if(nrow(coverage_table) != nrow(countries), "Coverage table must have one row per country")
+write.csv(coverage_table, "outputs/tables/ilostat_coverage.csv", row.names = FALSE, na = "")

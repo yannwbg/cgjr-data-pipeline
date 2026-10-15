@@ -1,5 +1,7 @@
 library(dplyr)
 
+source("R/00_checks.R")
+
 raw <- read.csv("data/raw/ilostat.csv", stringsAsFactors = FALSE)
 countries <- read.csv("config/countries.csv", stringsAsFactors = FALSE)
 config <- read.csv("config/ilostat_indicators.csv", stringsAsFactors = FALSE)
@@ -13,6 +15,12 @@ if (!"obs_status" %in% names(raw)) {
   warning("ILOSTAT obs_status is absent from the download; status is set to NA.")
   raw$obs_status <- NA_character_
 }
+
+in_scope <- raw$ref_area %in% countries$country_code
+fail_if(any(is.na(suppressWarnings(as.integer(raw$time[in_scope])))),
+        "Non-numeric ILOSTAT time for configured countries")
+warn_if(any(is.na(suppressWarnings(as.numeric(raw$obs_value))) & !is.na(raw$obs_value)),
+        "Non-numeric ILOSTAT obs_value entries will become NA")
 
 clean <- raw |>
   rename(country_code = ref_area, year = time, source_detail = source, status = obs_status) |>
@@ -42,4 +50,6 @@ if (length(missing_countries) > 0L) {
 }
 if (anyNA(clean$value)) warning("Missing ILOSTAT values: investigate coverage.")
 
+message("INFO: ILOSTAT rows read ", nrow(raw), ", kept ", nrow(clean))
+print(table(clean$status, useNA = "ifany"))
 write.csv(clean, "data/processed/ilostat_long.csv", row.names = FALSE, na = "")

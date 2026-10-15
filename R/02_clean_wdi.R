@@ -1,5 +1,7 @@
 library(dplyr)
 
+source("R/00_checks.R")
+
 raw <- read.csv("data/raw/wdi.csv", stringsAsFactors = FALSE)
 countries <- read.csv("config/countries.csv", stringsAsFactors = FALSE)
 indicators <- read.csv("config/indicators.csv", stringsAsFactors = FALSE)
@@ -24,4 +26,6 @@ clean <- bind_rows(lapply(seq_len(nrow(indicators)), function(index) {
   arrange(country_code, year, indicator)
 
 if (nrow(clean) == 0L) stop("No observations remain after filtering.")
+expected_rows <- sum(countries$end_year - countries$start_year + 1) * nrow(indicators)
+warn_if(nrow(clean) != expected_rows, paste("wdi_long has", nrow(clean), "rows; expected", expected_rows))
 write.csv(clean, "data/processed/wdi_long.csv", row.names = FALSE, na = "")
